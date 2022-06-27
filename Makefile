@@ -5,22 +5,43 @@ INC=$(PWD)
 INC_PARAMS=$(INC:%=-I%)
 
 CC := gcc
-CFLAGS+=-Wall
-CFLAGS+=-O1
 
 # Lexer and parser
-LEXER := flex
-PARSER := bison
+LEX := flex
+YACC := bison
 
-lexer.h lexer.c: lexer.l
-	$(LEXER) --header-file=lexer.h -o lexer.c lexer.l
+# file
+LEX_FILE := lex.l
+YACC_FILE := parser.y
 
-parser.h parser.c: parser.y
-	$(PARSE) -d -v -o parser.c parser.y
+GENERATED_C_LEX := $(LEX_FILE:.l=.c)
+GENERATED_H_LEX := $(LEX_FILE:.l=.h)
 
-%.o: %.c
-	$(CC) $(CFLAGS) $(INC_PARAMS) -c $< -o $@
+GENERATED_C_YACC := $(YACC_FILE:.y=.c)
+GENERATED_H_YACC := $(YACC_FILE:.y=.h)
 
-c-files: parser.c lexer.c
+GENERATED_C_FILE := $(GENERATED_C_YACC) $(GENERATED_C_LEX)
 
-all: c-files
+GENERATED_FILE := $(GENERATED_H_YACC) $(GENERATED_H_LEX)
+GENERATED_FILE := $(GENERATED_H_YACC) $(GENERATED_H_LEX)
+GENERATED_FILE += $(GENERATED_C_FILE) $(GENERATED_C_FILE:.c=.o)
+GENERATED_FILE += $(YACC_FILE:.y=.output)
+
+OBJ := $(GENERATED_C_FILE:.c=.o)
+BIN := test
+
+all: $(GENERATED_C_LEX) $(GENERATED_C_YACC) $(OBJ)
+	$(CC) $(CFLAGS) $(INC_PARAMS) $(OBJ) -o $(BIN)
+
+$(GENERATED_C_LEX): $(LEX_FILE)
+	$(LEX) --header-file=$*.h -o $*.c $<
+
+$(GENERATED_C_YACC): $(YACC_FILE)
+	$(YACC) -d -v -o $*.c $<
+
+%.o : %.c
+	$(CC) -c $<
+
+clean:
+	rm -f $(GENERATED_FILE)
+	rm -f $(BIN)
