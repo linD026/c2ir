@@ -1,47 +1,43 @@
-PWD := $(CURDIR)
+all: parser
 
-# C config
-INC=$(PWD)
-INC_PARAMS=$(INC:%=-I%)
-
-CC := gcc
+CC := g++
 
 # Lexer and parser
 LEX := flex
 YACC := bison
+SRC_CPP :=
 
 # file
 LEX_FILE := lex.l
 YACC_FILE := parser.y
 
-GENERATED_C_LEX := $(LEX_FILE:.l=.c)
-GENERATED_H_LEX := $(LEX_FILE:.l=.h)
+LEX_CPP := $(LEX_FILE:.l=.cpp)
+LEX_HPP := $(LEX_FILE:.l=.hpp)
+YACC_CPP := $(YACC_FILE:.y=.cpp)
+YACC_HPP := $(YACC_FILE:.y=.hpp)
+YACC_OUTPUT := $(YACC_FILE:.y=.output)
 
-GENERATED_C_YACC := $(YACC_FILE:.y=.c)
-GENERATED_H_YACC := $(YACC_FILE:.y=.h)
+OBJ := $(LEX_CPP:.cpp=.o) $(YACC_CPP:.cpp=.o) $(SRC_CPP:.cpp=.o)
+BIN := c2ir
 
-GENERATED_C_FILE := $(GENERATED_C_YACC) $(GENERATED_C_LEX)
+LLVMCONFIG := llvm-config
+CPPFLAGS := `$(LLVMCONFIG) --cppflags` -std=c++11
+LDFLAGS := `$(LLVMCONFIG) --ldflags` -lpthread -ldl -lz -lncurses -rdynamic
+	
+parser: $(LEX_CPP) $(YACC_CPP) $(OBJ)
+	$(CC) -o $(BIN) $(OBJ) $(LDFLAGS)
 
-GENERATED_FILE := $(GENERATED_H_YACC) $(GENERATED_H_LEX)
-GENERATED_FILE := $(GENERATED_H_YACC) $(GENERATED_H_LEX)
-GENERATED_FILE += $(GENERATED_C_FILE) $(GENERATED_C_FILE:.c=.o)
-GENERATED_FILE += $(YACC_FILE:.y=.output)
+$(LEX_CPP): $(LEX_FILE)
+	$(LEX) --header-file=$*.hpp -o $*.cpp $<
 
-OBJ := $(GENERATED_C_FILE:.c=.o)
-BIN := test
+$(YACC_CPP): $(YACC_FILE)
+	$(YACC) -d -v -o $*.cpp $<
 
-all: $(GENERATED_C_LEX) $(GENERATED_C_YACC) $(OBJ)
-	$(CC) $(CFLAGS) $(INC_PARAMS) $(OBJ) -o $(BIN)
-
-$(GENERATED_C_LEX): $(LEX_FILE)
-	$(LEX) --header-file=$*.h -o $*.c $<
-
-$(GENERATED_C_YACC): $(YACC_FILE)
-	$(YACC) -d -v -o $*.c $<
-
-%.o : %.c
-	$(CC) -c $<
+%.o : %.cpp
+	$(CC) -c $< $(CPPFLAGS)
 
 clean:
-	rm -f $(GENERATED_FILE)
+	rm -f $(LEX_CPP) $(YACC_CPP) $(LEX_HPP) $(YACC_HPP)
+	rm -f $(YACC_OUTPUT)
+	rm -f $(OBJ)
 	rm -f $(BIN)
