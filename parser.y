@@ -3,7 +3,7 @@
     #include <vector>
     #include <cstdio>
     NBlock *programBlock;
-    
+
     extern int yylex();
     void yyerror(const char *s)
     {
@@ -26,86 +26,89 @@
 }
 
 %token <string>     T_IDENTIFIER
-%token <string>     T_STRING T_CHAR
 
-%token <string>     T_INTEGER
-%token <token>      T_ADD T_MINUS
+%token <string>     T_INT T_CHAR
+%token <string>     T_INTEGER T_LITERAL
+%token <string>     T_HEADER
 
+%token <token>      T_ADD T_MINUS T_ASTERISK
 %token <token>      T_EQUAL
-
 %token <token>      T_CMP_EQUAL
 
 %token <token>      T_COMMA T_LPAREN T_RPAREN T_LBRACE T_RBRACE
 %token <token>      T_SEQPOINT
-%token <token>      T_RETURN
+%token <token>      T_EXTERN T_RETURN
 
-%type <ident> ident
-%type <expr> numeric expr 
-%type <varvec> func_decl_args
-%type <exprvec> call_args
 %type <block> program stmts block
 %type <stmt> stmt var_decl func_decl
 %type <token> comparison
+%type <expr> numeric expr 
+%type <ident> ident typename
+
+%type <varvec> func_decl_args
+%type <exprvec> call_args
 
 /* operater precendence */
 %left T_ADD T_MINUS
 
 %start program
 
-
-// shared_ptr<NVariableDeclaration>($<var_decl>3)
 %%
 
-program : stmts { programBlock = $1; }
-		;
-		
-stmts : stmt { $$ = new NBlock(); $$->statements->push_back(shared_ptr<NStatement>($1)); }
-	  | stmts stmt { $1->statements->push_back(shared_ptr<NStatement>($2)); }
-	  ;
+program             : func_decl
+                    | T_HEADER
+                    | program func_decl
+                    ;
 
-stmt : var_decl | func_decl
-	 | expr { $$ = new NExpressionStatement(shared_ptr<NExpression>($1)); }
-	 | T_RETURN expr { $$ = new NReturnStatement(shared_ptr<NExpression>($2)); }
-     ;
+func_decl           : T_EXTERN typename ident T_LPAREN func_decl_args T_RPAREN T_SEQPOINT
+                    | typename ident T_LPAREN func_decl_args T_RPAREN block
+                    ;
 
-block : T_LBRACE stmts T_RBRACE { $$ = $2; }
-	  | T_LBRACE T_RBRACE { $$ = new NBlock(); }
-	  ;
+call_args           : 
+                    | ident
+                    | call_args T_COMMA ident
+                    ;
 
-var_decl : ident ident { $$ = new NVariableDeclaration(shared_ptr<NIdentifier>($1), shared_ptr<NIdentifier>($2), nullptr); }
-		 | ident ident T_EQUAL expr { $$ = new NVariableDeclaration(shared_ptr<NIdentifier>($1), shared_ptr<NIdentifier>($2), shared_ptr<NExpression>($4)); }
-		 ;
+func_decl_args      : 
+                    | func_decl_args T_COMMA var_decl
+                    | var_decl
+                    ;
 
-func_decl : ident ident T_LPAREN func_decl_args T_RPAREN block 
-			{ $$ = new NFunctionDeclaration(shared_ptr<NIdentifier>($1), shared_ptr<NIdentifier>($2), shared_ptr<VariableList>($4), shared_ptr<NBlock>($6)); }
-		  ;
-	
-func_decl_args : { $$ = new VariableList(); }
-		       | var_decl { $$ = new VariableList(); $$->push_back(shared_ptr<NVariableDeclaration>($<var_decl>1)); }
-		       | func_decl_args T_COMMA var_decl { $1->push_back(shared_ptr<NVariableDeclaration>($<var_decl>3)); }
-		       ;
+var_decl            : typename ident
+                    | typename ident T_EQUAL expr
+                    ;
 
-ident : T_IDENTIFIER { $$ = new NIdentifier(*$1); delete $1; }
-	  ;
+block               : T_LBRACE stmts T_RBRACE
+                    ;
 
-numeric : T_INTEGER { $$ = new NInteger(atol($1->c_str())); delete $1; }
-		;
-	
-expr : ident T_EQUAL expr { $$ = new NAssignment(shared_ptr<NIdentifier>($1), shared_ptr<NExpression>($3)); }
-	 | ident T_LPAREN call_args T_RPAREN { $$ = new NMethodCall(shared_ptr<NIdentifier>($1), shared_ptr<ExpressionList>($3)); }
-	 | ident { $<ident>$ = $1; }
-	 | numeric
-         | expr T_ADD expr { $$ = new NBinaryOperator(shared_ptr<NExpression>($1), $2, shared_ptr<NExpression>($3)); }
-         | expr T_MINUS expr { $$ = new NBinaryOperator(shared_ptr<NExpression>($1), $2, shared_ptr<NExpression>($3)); }
- 	 | expr comparison expr { $$ = new NBinaryOperator(shared_ptr<NExpression>($1), $2, shared_ptr<NExpression>($3)); }
-     | T_LPAREN expr T_RPAREN { $$ = $2; }
-	 ;
-	
-call_args : { $$ = new ExpressionList(); }
-		  | expr { $$ = new ExpressionList(); $$->push_back(shared_ptr<NExpression>($1)); }
-		  | call_args T_COMMA expr { $1->push_back(shared_ptr<NExpression>($3)); }
-		  ;
+stmts               : stmt
+                    | stmts stmt
+                    ;
 
-comparison : T_CMP_EQUAL ;
+stmt                : var_decl T_SEQPOINT
+                    | expr T_SEQPOINT
+                    | T_RETURN expr T_SEQPOINT
+                    ;
+
+expr                : 
+                    | ident
+                    | numeric
+                    | T_LPAREN ident T_RPAREN
+                    | ident T_LPAREN call_args T_RPAREN
+                    | expr T_ADD expr 
+                    | expr T_MINUS expr 
+                    ;
+
+ident               : T_IDENTIFIER
+                    ;
+
+typename            : T_INT
+                    | T_CHAR
+                    | T_CHAR T_ASTERISK
+                    ;
+
+numeric             : T_INTEGER
+                    | T_LITERAL
+                    ;
 
 %%
