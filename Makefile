@@ -44,12 +44,20 @@ test: clean all
 	@cat text.c
 	@echo ""
 	@cat text.c | ./$(BIN)
+	@echo ""
 
 clean:
 	rm -f $(LEX_CPP) $(YACC_CPP) $(LEX_HPP) $(YACC_HPP)
 	rm -f $(YACC_C) $(YACC_H) $(YACC_OUTPUT)
 	rm -f $(OBJ)
 	rm -f $(BIN)
+
+llvm-ir-sample:
+	@echo ""
+	clang -S -emit-llvm text.c
+	cat text.ll
+	@echo ""
+	@rm -f text.ll
 
 indent:
 	clang-format -i *.cpp

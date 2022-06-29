@@ -162,7 +162,7 @@ public:
 
     Value *getSymbolValue(string name) const
     {
-        if (blocks.top()->locals.find(name) == blocks.top()->locals.end())
+        if (blocks.top()->locals.find(name) != blocks.top()->locals.end())
             return blocks.top()->locals[name];
         return nullptr;
     }
@@ -241,6 +241,22 @@ Value *NIdentifier::codeGen(CodeGenContext &context)
     //    new LoadInst(context.locals()[name], "", false, context.currentBlock());
 
     Value *value = context.getSymbolValue(this->name);
+    if (!value)
+        cout << "Unknown variable name " + this->name << endl;
+
+    if (value->getType()->isPointerTy()) {
+        auto arrayPtr = context.builder.CreateLoad(value, "arrayPtr");
+        if (arrayPtr->getType()->isArrayTy()) {
+            cout << "(Array Type)" << endl;
+            //            arrayPtr->setAlignment(16);
+            std::vector<Value *> indices;
+            indices.push_back(ConstantInt::get(
+                Type::getInt32Ty(context.llvmContext), 0, false));
+            auto ptr =
+                context.builder.CreateInBoundsGEP(value, indices, "arrayPtr");
+            return ptr;
+        }
+    }
 
     return context.builder.CreateLoad(value, false, "");
 }
@@ -265,6 +281,7 @@ Value *NMethodCall::codeGen(CodeGenContext &context)
     for (auto it = arguments->begin(); it != arguments->end(); it++) {
         argsv.push_back((*it)->codeGen(context));
         if (!argsv.back()) { // if any argument codegen fail
+            cout << "    arg codegen fail" << endl;
             return nullptr;
         }
     }
@@ -346,8 +363,8 @@ Value *NReturnStatement::codeGen(CodeGenContext &context)
 
 Value *NVariableDeclaration::codeGen(CodeGenContext &context)
 {
-    cout << "Generating variable declaration of " << this->type->name << " "
-         << this->id->name << endl;
+    cout << "Generating variable declaration of " << this->type->name
+         << ((this->type->isPtr) ? " *" : " ") << " " << this->id->name << endl;
     Type *type = context.TypeOf(*this->type);
     Value *initial = nullptr;
 

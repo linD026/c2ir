@@ -25,6 +25,7 @@
 
 [ \t\n]                         ;
 "extern"                        { LEX_TOKEN(EXTERN); }
+"const"                         ;
 "int"                           { LEX_STORE_STR_TOKEN(INT); }
 "char"                          { LEX_STORE_STR_TOKEN(CHAR); }
 "return"                        { LEX_TOKEN(RETURN); }
