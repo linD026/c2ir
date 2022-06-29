@@ -3,6 +3,7 @@
 #include "codegen.hpp"
 #include "ASTnode.hpp"
 
+#include "ObjGen.hpp"
 #include "corefn.hpp"
 
 using namespace std;
@@ -22,6 +23,7 @@ int main(int argc, char **argv)
     CodeGenContext context;
     createCoreFunctions(context);
     context.generateCode(*programBlock);
+    ObjGen(context, "text.o");
     context.runCode();
 
     return 0;

@@ -150,13 +150,15 @@ public:
     /* Returns an LLVM type based on the identifier */
     Type *TypeOf(const NIdentifier &type)
     {
+        cout << "     identifier type: " + type.name << endl;
         if (type.name.compare("int") == 0) {
             return Type::getInt32Ty(llvmContext);
-        } else if (type.name.compare("char")) {
+        } else if (type.name.compare("char") == 0) {
             if (type.isPtr)
                 return Type::getInt8PtrTy(llvmContext);
             return Type::getInt8Ty(llvmContext);
         }
+        cout << "should not be here, since text.c won't have void type variable" << endl;
         return Type::getVoidTy(llvmContext);
     }
 
