@@ -39,6 +39,9 @@ $(YACC_CPP): $(YACC_FILE)
 %.o : %.cpp
 	$(CC) -c $< $(CPPFLAGS)
 
+test: all
+	cat text.c | ./$(BIN)
+
 clean:
 	rm -f $(LEX_CPP) $(YACC_CPP) $(LEX_HPP) $(YACC_HPP)
 	rm -f $(YACC_C) $(YACC_H) $(YACC_OUTPUT)
