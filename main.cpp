@@ -14,7 +14,9 @@ extern NBlock *programBlock;
 int main(int argc, char **argv)
 {
     yyparse();
-    std::cout << programBlock << std::endl;
+    cout << programBlock << endl;
+
+    cout << "---------------------" << endl;
 
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();
@@ -23,8 +25,10 @@ int main(int argc, char **argv)
     CodeGenContext context;
     createCoreFunctions(context);
     context.generateCode(*programBlock);
+
+    cout << "---------------------" << endl;
+
     ObjGen(context, "text.o");
-    context.runCode();
 
     return 0;
 }

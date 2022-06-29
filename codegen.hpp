@@ -101,9 +101,53 @@ public:
 
         /* Create the top level interpreter function to call as entry */
         vector<Type *> argTypes;
-        FunctionType *ftype = FunctionType::get(Type::getVoidTy(llvmContext),
+        FunctionType *ftype = FunctionType::get(Type::getInt32Ty(llvmContext),
                                                 makeArrayRef(argTypes), false);
-        mainFunction = Function::Create(ftype, GlobalValue::InternalLinkage,
+        mainFunction = Function::Create(ftype, GlobalValue::ExternalLinkage,
+                                        "main" /*, module */);
+        BasicBlock *bblock =
+            BasicBlock::Create(llvmContext, "entry" /* , mainFunction, 0 */);
+
+        cout << "Start generate code" << endl;
+
+        /* Push a new variable/block context */
+        pushBlock(bblock);
+
+        cout << "After push Block" << endl;
+
+        root.codeGen(*this); /* emit bytecode for the toplevel block */
+
+        cout << "After code gen" << endl;
+
+        //ReturnInst::Create(llvmContext, bblock);
+        popBlock();
+
+        /*
+         * Print the bytecode in a human-readable format 
+	     * to see if our program compiled properly
+	     */
+        cout << "Code is generated." << endl;
+        cout << "----------------------" << endl;
+
+        legacy::PassManager pm;
+        pm.add(createPrintModulePass(outs()));
+        pm.run(*module);
+        return;
+    }
+
+    /* 
+     * Build and run
+     * Executes the AST by running the main function
+     */
+    GenericValue generateAndRunCode(NBlock &root)
+    {
+        cout << "Generating code..." << endl;
+
+        /* Create the top level interpreter function to call as entry */
+        vector<Type *> argTypes;
+        FunctionType *ftype = FunctionType::get(Type::getInt32Ty(llvmContext),
+                                                makeArrayRef(argTypes), false);
+        mainFunction = Function::Create(ftype, GlobalValue::ExternalLinkage,
                                         "main", module);
         BasicBlock *bblock =
             BasicBlock::Create(llvmContext, "entry", mainFunction, 0);
@@ -122,21 +166,13 @@ public:
         ReturnInst::Create(llvmContext, bblock);
         popBlock();
 
-        /*
-         * Print the bytecode in a human-readable format 
-	     * to see if our program compiled properly
-	     */
         cout << "Code is generated." << endl;
-        // module->dump();
+        cout << "----------------------" << endl;
 
         legacy::PassManager pm;
         pm.add(createPrintModulePass(outs()));
         pm.run(*module);
-    }
 
-    /* Executes the AST by running the main function */
-    GenericValue runCode()
-    {
         cout << "Running code..." << endl;
         ExecutionEngine *ee =
             EngineBuilder(unique_ptr<Module>(module)).create();
@@ -158,7 +194,8 @@ public:
                 return Type::getInt8PtrTy(llvmContext);
             return Type::getInt8Ty(llvmContext);
         }
-        cout << "should not be here, since text.c won't have void type variable" << endl;
+        cout << "should not be here, since text.c won't have void type variable"
+             << endl;
         return Type::getVoidTy(llvmContext);
     }
 

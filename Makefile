@@ -39,12 +39,16 @@ $(YACC_CPP): $(YACC_FILE)
 %.o : %.cpp
 	$(CC) -c $< $(CPPFLAGS)
 
-test: clean all
+excute: clean all
 	@echo ""
 	@cat text.c
 	@echo ""
 	@cat text.c | ./$(BIN)
-	@echo ""
+
+test: excute llvm-ir-sample
+	clang -o test text.o
+	./test
+	rm -f test text.o
 
 clean:
 	rm -f $(LEX_CPP) $(YACC_CPP) $(LEX_HPP) $(YACC_HPP)
@@ -53,10 +57,10 @@ clean:
 	rm -f $(BIN)
 
 llvm-ir-sample:
-	@echo ""
+	@echo "-------sample--------"
 	clang -S -emit-llvm text.c
 	cat text.ll
-	@echo ""
+	@echo "-------sample--------"
 	@rm -f text.ll
 
 indent:
