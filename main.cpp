@@ -3,7 +3,7 @@
 #include "codegen.hpp"
 #include "ASTnode.hpp"
 
-#include "ObjGen.hpp"
+#include "objgen.hpp"
 #include "corefn.hpp"
 
 using namespace std;
