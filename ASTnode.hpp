@@ -13,9 +13,9 @@ class NStatement;
 class NExpression;
 class NVariableDeclaration;
 
-typedef vector<shared_ptr<NStatement> > StatementList;
-typedef vector<shared_ptr<NExpression> > ExpressionList;
-typedef vector<shared_ptr<NVariableDeclaration> > VariableList;
+typedef vector<NStatement *> StatementList;
+typedef vector<NExpression *> ExpressionList;
+typedef vector<NVariableDeclaration *> VariableList;
 
 class Node {
 public:
@@ -49,182 +49,233 @@ class NInteger : public NExpression {
 public:
     long long value;
 
+    void print()
+    {
+        cout << "NInteger: " << value << endl;
+    }
+
     NInteger(long long value)
         : value(value)
     {
+        print();
     }
 
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
-};
-
-class NDouble : public NExpression {
-public:
-    double value;
-
-    NDouble(double value)
-        : value(value)
-    {
-    }
-    virtual llvm::Value *codeGen(CodeGenContext &context);
 };
 
 class NIdentifier : public NExpression {
 public:
     std::string name;
+    bool isType = false;
+
+    void print()
+    {
+        cout << "NIdentifier: " << name << endl;
+    }
 
     NIdentifier(const std::string &name)
         : name(name)
     {
+        print();
     }
+
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
 class NMethodCall : public NExpression {
 public:
-    const shared_ptr<NIdentifier> id;
-    shared_ptr<ExpressionList> arguments = make_shared<ExpressionList>();
+    const NIdentifier &id;
+    ExpressionList arguments;
 
-    NMethodCall(const shared_ptr<NIdentifier> id,
-                shared_ptr<ExpressionList> arguments)
+    void print()
+    {
+        cout << "NMethdCall" << endl;
+    }
+
+    NMethodCall(const NIdentifier &id, ExpressionList &arguments)
         : id(id)
         , arguments(arguments)
     {
+        print();
     }
-    NMethodCall(const shared_ptr<NIdentifier> id)
+
+    NMethodCall(const NIdentifier &id)
         : id(id)
     {
+        print();
     }
+
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
 class NBinaryOperator : public NExpression {
 public:
     int op;
-    shared_ptr<NExpression> lhs;
-    shared_ptr<NExpression> rhs;
+    NExpression &lhs;
+    NExpression &rhs;
 
-    NBinaryOperator(shared_ptr<NExpression> lhs, int op,
-                    shared_ptr<NExpression> rhs)
+    void print()
+    {
+        cout << "NBinaryOperator" << endl;
+    }
+
+    NBinaryOperator(NExpression &lhs, int op, NExpression &rhs)
         : lhs(lhs)
         , rhs(rhs)
         , op(op)
     {
+        print();
     }
+
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
 class NAssignment : public NExpression {
 public:
-    shared_ptr<NIdentifier> lhs;
-    shared_ptr<NExpression> rhs;
+    NExpression &lhs;
+    NExpression &rhs;
 
-    NAssignment()
+    void print()
     {
+        cout << "NAssignment" << endl;
     }
-    NAssignment(shared_ptr<NIdentifier> lhs, shared_ptr<NExpression> rhs)
+
+    NAssignment(NIdentifier &lhs, NExpression &rhs)
         : lhs(lhs)
         , rhs(rhs)
     {
+        print();
     }
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
 class NBlock : public NExpression {
 public:
-    shared_ptr<StatementList> statements;
+    StatementList statements;
+
+    void print()
+    {
+        cout << "NBlock" << endl;
+    }
 
     NBlock()
     {
+        print();
     }
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
 class NExpressionStatement : public NStatement {
 public:
-    shared_ptr<NExpression> expression;
+    NExpression &expression;
 
-    NExpressionStatement(shared_ptr<NExpression> expression)
+    void print()
+    {
+        cout << "NExpressionStatment" << endl;
+    }
+
+    NExpressionStatement(NExpression &expression)
         : expression(expression)
     {
+        print();
     }
+
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
 class NReturnStatement : public NStatement {
 public:
-    shared_ptr<NExpression> expression;
-
-    NReturnStatement()
+    NExpression &expression;
+    void print()
     {
+        cout << "NReturnStatement" << endl;
     }
 
-    NReturnStatement(shared_ptr<NExpression> expression)
+    NReturnStatement(NExpression &expression)
         : expression(expression)
     {
+        print();
     }
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
 class NVariableDeclaration : public NStatement {
 public:
-    const shared_ptr<NIdentifier> type;
-    shared_ptr<NIdentifier> id;
-    shared_ptr<NExpression> assignmentExpr = nullptr;
+    const NIdentifier &type;
+    NIdentifier &id;
+    NExpression *assignmentExpr = nullptr;
 
-    NVariableDeclaration()
+    void print()
     {
+        cout << "NVariableDeclaration" << endl;
     }
-    NVariableDeclaration(const shared_ptr<NIdentifier> type,
-                         shared_ptr<NIdentifier> id,
-                         shared_ptr<NExpression> assignmentExpr)
+
+    NVariableDeclaration(const NIdentifier &type, NIdentifier &id,
+                         NExpression *assignmentExpr)
         : type(type)
         , id(id)
         , assignmentExpr(assignmentExpr)
     {
+        print();
     }
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
 class NExternDeclaration : public NStatement {
 public:
-    const shared_ptr<NIdentifier> type;
-    const shared_ptr<NIdentifier> id;
-    shared_ptr<VariableList> arguments = make_shared<VariableList>();
-
-    NExternDeclaration()
+    const NIdentifier &type;
+    const NIdentifier &id;
+    VariableList arguments;
+    void print()
     {
+        cout << "NExternDeclaration" << endl;
     }
-    NExternDeclaration(const shared_ptr<NIdentifier> type,
-                       const shared_ptr<NIdentifier> id,
-                       const shared_ptr<VariableList> arguments)
+
+    NExternDeclaration(const NIdentifier &type, const NIdentifier &id,
+                       const VariableList &arguments)
         : type(type)
         , id(id)
         , arguments(arguments)
     {
+        print();
     }
     virtual llvm::Value *codeGen(CodeGenContext &context);
 };
 
 class NFunctionDeclaration : public NStatement {
 public:
-    const shared_ptr<NIdentifier> type;
-    const shared_ptr<NIdentifier> id;
-    shared_ptr<VariableList> arguments = make_shared<VariableList>();
-    shared_ptr<NBlock> block;
+    const NIdentifier &type;
+    const NIdentifier &id;
+    VariableList arguments;
+    NBlock &block;
+    bool isExtern = false;
 
-    NFunctionDeclaration()
+    void print()
     {
+        cout << "NFunctionDeclaration" << endl;
     }
-    NFunctionDeclaration(const shared_ptr<NIdentifier> type,
-                         const shared_ptr<NIdentifier> id,
-                         const shared_ptr<VariableList> arguments,
-                         shared_ptr<NBlock> block)
+
+    NFunctionDeclaration(const NIdentifier &type, const NIdentifier &id,
+                         const VariableList &arguments)
+        : type(type)
+        , id(id)
+        , arguments(arguments)
+        , block(*(new NBlock()))
+    {
+        isExtern = true;
+        print();
+    }
+
+    NFunctionDeclaration(const NIdentifier &type, const NIdentifier &id,
+                         const VariableList &arguments, NBlock &block)
         : type(type)
         , id(id)
         , arguments(arguments)
         , block(block)
     {
+        print();
     }
+
     virtual llvm::Value *codeGen(CodeGenContext &context);
 };
 

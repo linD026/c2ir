@@ -39,7 +39,7 @@
 %token <token>      T_SEQPOINT
 %token <token>      T_EXTERN T_RETURN
 
-%type <block> program stmts block
+%type <block> program program_unit stmts block
 %type <stmt> stmt var_decl func_decl
 %type <token> comparison
 %type <expr> numeric expr 
@@ -55,18 +55,21 @@
 
 %%
 
-program             : func_decl
+program             : program_unit { programBlock = $1; }
+                    ;
+
+program_unit        : func_decl
                     | T_HEADER
                     | program func_decl
                     ;
 
-func_decl           : T_EXTERN typename ident T_LPAREN func_decl_args T_RPAREN T_SEQPOINT
-                    | typename ident T_LPAREN func_decl_args T_RPAREN block
+func_decl           : T_EXTERN typename ident T_LPAREN func_decl_args T_RPAREN T_SEQPOINT { $$ = new NFunctionDeclaration(*$2, *$3, *$5); }
+                    | typename ident T_LPAREN func_decl_args T_RPAREN block { $$ = new NFunctionDeclaration(*$1, *$2, $4, *$6); }
                     ;
 
-call_args           : 
-                    | ident
-                    | call_args T_COMMA ident
+call_args           : { $$ = new ExpressionList(); }
+                    | expr
+                    | call_args T_COMMA expr
                     ;
 
 func_decl_args      : 
