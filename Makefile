@@ -39,7 +39,7 @@ $(YACC_CPP): $(YACC_FILE)
 %.o : %.cpp
 	$(CC) -c $< $(CPPFLAGS)
 
-test: all
+test: clean all
 	@echo ""
 	@cat text.c
 	@echo ""
@@ -50,3 +50,7 @@ clean:
 	rm -f $(YACC_C) $(YACC_H) $(YACC_OUTPUT)
 	rm -f $(OBJ)
 	rm -f $(BIN)
+
+indent:
+	clang-format -i *.cpp
+	clang-format -i *.hpp

@@ -16,6 +16,7 @@
             puts("    LEX_" #tkn);                          \
             return T_##tkn;                                 \
         } while (0)
+//"=="                            { LEX_TOKEN(CMP_EQUAL); }
 %}
 
 %option noyywrap
@@ -35,7 +36,6 @@
 "+"                             { LEX_TOKEN(ADD); }
 "-"                             { LEX_TOKEN(MINUS); }
 "="                             { LEX_TOKEN(EQUAL); } 
-"=="                            { LEX_TOKEN(CMP_EQUAL); }
 ","                             { LEX_TOKEN(COMMA); }
 "("                             { LEX_TOKEN(LPAREN); }
 ")"                             { LEX_TOKEN(RPAREN); }

@@ -133,7 +133,7 @@ public:
 class NBinaryOperator : public NExpression {
 public:
     int op;
-    NExpression *lhs;
+    NIdentifier *lhs;
     NExpression *rhs;
 
     void print()
@@ -141,7 +141,7 @@ public:
         cout << "NBinaryOperator" << endl;
     }
 
-    NBinaryOperator(NExpression *lhs, int op, NExpression *rhs)
+    NBinaryOperator(NIdentifier *lhs, int op, NExpression *rhs)
         : lhs(lhs)
         , rhs(rhs)
         , op(op)
@@ -154,7 +154,7 @@ public:
 
 class NAssignment : public NExpression {
 public:
-    NExpression *lhs;
+    NIdentifier *lhs;
     NExpression *rhs;
 
     void print()

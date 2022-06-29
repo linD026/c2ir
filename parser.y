@@ -35,7 +35,7 @@
 
 %token <token>      T_ADD T_MINUS T_ASTERISK
 %token <token>      T_EQUAL
-%token <token>      T_CMP_EQUAL
+//%token <token>      T_CMP_EQUAL
 
 %token <token>      T_COMMA T_LPAREN T_RPAREN T_LBRACE T_RBRACE
 %token <token>      T_SEQPOINT
@@ -43,7 +43,7 @@
 
 %type <block> program program_unit stmts block
 %type <stmt> stmt var_decl func_decl
-%type <token> comparison
+//%type <token> comparison
 %type <expr> numeric expr 
 %type <ident> ident typename
 
@@ -57,12 +57,11 @@
 
 %%
 
-program             : program_unit { programBlock = $1; }
+program             : program_unit
                     ;
 
-program_unit        : func_decl
-                    | T_HEADER
-                    | program func_decl
+program_unit        : T_HEADER program_unit { $$ = $2; }
+                    | stmts { programBlock = $1; puts("parser program block"); }
                     ;
 
 func_decl           : T_EXTERN typename ident T_LPAREN func_decl_args T_RPAREN T_SEQPOINT
@@ -89,17 +88,16 @@ block               : T_LBRACE stmts T_RBRACE { $$ = $2; }
                     | T_LBRACE T_RPAREN { $$ = new NBlock(); }
                     ;
 
-stmts               : stmt { $$ = new NBlock(); /* $$->statements->push_back($1);*/ }
+stmts               : stmt { $$ = new NBlock();  $$->statements->push_back($1); }
                     | stmts stmt { $1->statements->push_back($2); }
                     ;
 
-stmt                : var_decl T_SEQPOINT
+stmt                : var_decl T_SEQPOINT | func_decl
                     | expr T_SEQPOINT { $$ = new NExpressionStatement($1); }
                     | T_RETURN expr T_SEQPOINT { $$ = new NReturnStatement($2); }
                     ;
 
-expr                : 
-                    | ident { $<ident>$ = $1; }
+expr                : ident { $<ident>$ = $1; }
                     | T_LPAREN ident T_RPAREN { $<ident>$ = $2; }
                     | numeric
                     | T_LITERAL { $$ = new NLiteral(*$1); delete $1; }
