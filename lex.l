@@ -6,14 +6,14 @@
 
     #define LEX_TOKEN(tkn)                  \
         do {                                \
-            puts("LEX_" #tkn);              \
+            puts("    LEX_" #tkn);          \
             return (yylval.token = T_##tkn);\
         } while (0)
 
     #define LEX_STORE_STR_TOKEN(tkn)                        \
         do {                                                \
             yylval.string = new std::string(yytext, yyleng);\
-            puts("LEX_" #tkn);                              \
+            puts("    LEX_" #tkn);                          \
             return T_##tkn;                                 \
         } while (0)
 %}

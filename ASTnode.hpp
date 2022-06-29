@@ -45,6 +45,8 @@ public:
     }
 };
 
+/* ------------------------- Expression ------------------------- */
+
 class NInteger : public NExpression {
 public:
     long long value;
@@ -63,17 +65,37 @@ public:
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
+class NLiteral : public NExpression {
+public:
+    string value;
+
+    void print()
+    {
+        cout << "NLiteral: " << value << endl;
+    }
+
+    NLiteral(const string &str)
+        : value(str)
+    {
+        print();
+    }
+
+    virtual llvm::Value *codeGen(CodeGenContext &context) override;
+};
+
+
 class NIdentifier : public NExpression {
 public:
-    std::string name;
+    string name;
     bool isType = false;
+    bool isPtr = false;
 
     void print()
     {
         cout << "NIdentifier: " << name << endl;
     }
 
-    NIdentifier(const std::string &name)
+    NIdentifier(const string &name)
         : name(name)
     {
         print();
@@ -84,22 +106,22 @@ public:
 
 class NMethodCall : public NExpression {
 public:
-    const NIdentifier &id;
-    ExpressionList arguments;
+    const NIdentifier *id;
+    ExpressionList *arguments;
 
     void print()
     {
         cout << "NMethdCall" << endl;
     }
 
-    NMethodCall(const NIdentifier &id, ExpressionList &arguments)
+    NMethodCall(const NIdentifier *id, ExpressionList *arguments)
         : id(id)
         , arguments(arguments)
     {
         print();
     }
 
-    NMethodCall(const NIdentifier &id)
+    NMethodCall(const NIdentifier *id)
         : id(id)
     {
         print();
@@ -111,15 +133,15 @@ public:
 class NBinaryOperator : public NExpression {
 public:
     int op;
-    NExpression &lhs;
-    NExpression &rhs;
+    NExpression *lhs;
+    NExpression *rhs;
 
     void print()
     {
         cout << "NBinaryOperator" << endl;
     }
 
-    NBinaryOperator(NExpression &lhs, int op, NExpression &rhs)
+    NBinaryOperator(NExpression *lhs, int op, NExpression *rhs)
         : lhs(lhs)
         , rhs(rhs)
         , op(op)
@@ -132,15 +154,15 @@ public:
 
 class NAssignment : public NExpression {
 public:
-    NExpression &lhs;
-    NExpression &rhs;
+    NExpression *lhs;
+    NExpression *rhs;
 
     void print()
     {
         cout << "NAssignment" << endl;
     }
 
-    NAssignment(NIdentifier &lhs, NExpression &rhs)
+    NAssignment(NIdentifier *lhs, NExpression *rhs)
         : lhs(lhs)
         , rhs(rhs)
     {
@@ -151,7 +173,7 @@ public:
 
 class NBlock : public NExpression {
 public:
-    StatementList statements;
+    StatementList *statements = new StatementList();
 
     void print()
     {
@@ -165,16 +187,18 @@ public:
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
+/* ------------------------- Statement ------------------------- */
+
 class NExpressionStatement : public NStatement {
 public:
-    NExpression &expression;
+    NExpression *expression;
 
     void print()
     {
         cout << "NExpressionStatment" << endl;
     }
 
-    NExpressionStatement(NExpression &expression)
+    NExpressionStatement(NExpression *expression)
         : expression(expression)
     {
         print();
@@ -185,13 +209,13 @@ public:
 
 class NReturnStatement : public NStatement {
 public:
-    NExpression &expression;
+    NExpression *expression;
     void print()
     {
         cout << "NReturnStatement" << endl;
     }
 
-    NReturnStatement(NExpression &expression)
+    NReturnStatement(NExpression *expression)
         : expression(expression)
     {
         print();
@@ -201,8 +225,8 @@ public:
 
 class NVariableDeclaration : public NStatement {
 public:
-    const NIdentifier &type;
-    NIdentifier &id;
+    const NIdentifier *type;
+    NIdentifier *id;
     NExpression *assignmentExpr = nullptr;
 
     void print()
@@ -210,8 +234,8 @@ public:
         cout << "NVariableDeclaration" << endl;
     }
 
-    NVariableDeclaration(const NIdentifier &type, NIdentifier &id,
-                         NExpression *assignmentExpr)
+    NVariableDeclaration(const NIdentifier *type, NIdentifier *id,
+                         NExpression *assignmentExpr = NULL)
         : type(type)
         , id(id)
         , assignmentExpr(assignmentExpr)
@@ -221,58 +245,31 @@ public:
     virtual llvm::Value *codeGen(CodeGenContext &context) override;
 };
 
-class NExternDeclaration : public NStatement {
-public:
-    const NIdentifier &type;
-    const NIdentifier &id;
-    VariableList arguments;
-    void print()
-    {
-        cout << "NExternDeclaration" << endl;
-    }
-
-    NExternDeclaration(const NIdentifier &type, const NIdentifier &id,
-                       const VariableList &arguments)
-        : type(type)
-        , id(id)
-        , arguments(arguments)
-    {
-        print();
-    }
-    virtual llvm::Value *codeGen(CodeGenContext &context);
-};
-
 class NFunctionDeclaration : public NStatement {
 public:
-    const NIdentifier &type;
-    const NIdentifier &id;
-    VariableList arguments;
-    NBlock &block;
+    const NIdentifier *type = NULL;
+    const NIdentifier *id = NULL;
+    VariableList *arguments;
+    NBlock *block = NULL;
     bool isExtern = false;
 
     void print()
     {
-        cout << "NFunctionDeclaration" << endl;
+        if (isExtern)
+            cout << "Extern NFunctionDeclaration" << endl;
+        else
+            cout << "NFunctionDeclaration" << endl;
     }
 
-    NFunctionDeclaration(const NIdentifier &type, const NIdentifier &id,
-                         const VariableList &arguments)
-        : type(type)
-        , id(id)
-        , arguments(arguments)
-        , block(*(new NBlock()))
-    {
-        isExtern = true;
-        print();
-    }
-
-    NFunctionDeclaration(const NIdentifier &type, const NIdentifier &id,
-                         const VariableList &arguments, NBlock &block)
+    NFunctionDeclaration(const NIdentifier *type, const NIdentifier *id,
+                         VariableList *arguments, NBlock *block)
         : type(type)
         , id(id)
         , arguments(arguments)
         , block(block)
     {
+        if (block == nullptr)
+            isExtern = true;
         print();
     }
 

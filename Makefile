@@ -40,7 +40,10 @@ $(YACC_CPP): $(YACC_FILE)
 	$(CC) -c $< $(CPPFLAGS)
 
 test: all
-	cat text.c | ./$(BIN)
+	@echo ""
+	@cat text.c
+	@echo ""
+	@cat text.c | ./$(BIN)
 
 clean:
 	rm -f $(LEX_CPP) $(YACC_CPP) $(LEX_HPP) $(YACC_HPP)
