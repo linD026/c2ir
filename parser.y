@@ -71,8 +71,8 @@ func_decl           : T_EXTERN typename ident T_LPAREN func_decl_args T_RPAREN T
                     ;
 
 call_args           : { $$ = new ExpressionList(); }
-                    | ident { $$ = new ExpressionList(); $$->push_back($1); }
-                    | call_args T_COMMA ident { $1->push_back($3); }
+                    | expr { $$ = new ExpressionList(); $$->push_back($1); }
+                    | call_args T_COMMA expr { $1->push_back($3); }
                     ;
 
 func_decl_args      : { $$ = new VariableList(); } 

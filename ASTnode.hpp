@@ -75,8 +75,8 @@ public:
     }
 
     NLiteral(const string &str)
-        : value(str)
     {
+        value = str.substr(1, str.length()-2);
         print();
     }
 

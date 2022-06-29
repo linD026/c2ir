@@ -30,7 +30,7 @@
 "char"                          { LEX_STORE_STR_TOKEN(CHAR); }
 "return"                        { LEX_TOKEN(RETURN); }
 "#include <"[a-zA-Z0-9.]+">"    { LEX_STORE_STR_TOKEN(HEADER); }
-\"[ a-zA-Z0-9,.!]+\"            { LEX_STORE_STR_TOKEN(LITERAL); }
+\"[ a-zA-Z0-9,.!$%=\\]+\"       { LEX_STORE_STR_TOKEN(LITERAL); }
 [a-zA-Z_][a-zA-Z0-9_]*          { LEX_STORE_STR_TOKEN(IDENTIFIER); }
 [0-9]+                          { LEX_STORE_STR_TOKEN(INTEGER); }
 "*"                             { LEX_TOKEN(ASTERISK); }
@@ -43,6 +43,7 @@
 "{"                             { LEX_TOKEN(LBRACE); }
 "}"                             { LEX_TOKEN(RBRACE); }
 ";"                             { LEX_TOKEN(SEQPOINT); }
+", ..."                         ;
 .                               { printf("Unknown token"); yyterminate(); }
 
 %%
