@@ -39,13 +39,13 @@ $(YACC_CPP): $(YACC_FILE)
 %.o : %.cpp
 	$(CC) -c $< $(CPPFLAGS)
 
-excute: clean all
+execute: clean all
 	@echo ""
 	@cat text.c
 	@echo ""
 	@cat text.c | ./$(BIN)
 
-test: excute llvm-ir-sample
+test: execute llvm-ir-sample
 	clang -o test text.o
 	./test
 	rm -f test text.o
