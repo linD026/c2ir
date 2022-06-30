@@ -16,7 +16,10 @@ int do_math(int a)
 int main () {
     char *string = "Hello World!";
 
-    do_math(1);
+    int b = do_math(1);
+
+    printf("b = %d", b - 1);
+    puts(" ");
     puts(string);
 
     return 0;
